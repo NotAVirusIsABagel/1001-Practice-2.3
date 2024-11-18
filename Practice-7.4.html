@@ -433,6 +433,40 @@ nutrient34</code></pre>
 ## 
 ## $p_value
 ## [1] 0.02386844</code></pre>
+<p>Nutrient Treatment (Day 3 vs Day 4):</p>
+<p>Correlation coefficient: 0.774425 → a strong positive correlation
+between Day 3 and Day 4.</p>
+<p>t-value: 5.7414 larger t-value→no linear correlation</p>
+<p>p-value: 8.93837e-06 much smaller than 0.05→there is a significant
+positive correlation between Day 3 and Day 4</p>
+<p>Water Treatment (Day 3 vs Day 4):</p>
+<p>Correlation coefficient: 0.7865 strong positive correlation between
+Day 3 and Day 4</p>
+<p>t-value: 5.9724 This t-value is large→no correlation</p>
+<p>p-value: 5.197822e-06 extremely small→ there is a significant
+positive correlation between Day 3 and Day 4</p>
+<p>Nutrient Treatment Results (Day 3 vs Day 8):</p>
+<p>Correlation coefficient: 0.2417 The correlation is quite low,→little
+linear relationship between length at Day 3 and Day 8 data under the
+nutrient treatment.</p>
+<p>t-value: 1.168247 The t-value is not very high→low correlation.</p>
+<p>p-value: 0.2552119 Since this p-value is &gt; 0.05→ no significant
+correlation.</p>
+<p>Water Treatment Results (Day 3 vs Day 8):</p>
+<p>Correlation coefficient: 0.4595545 a moderate linear relationship
+between Day 3 and Day 8 data under the water treatment.</p>
+<p>t-value: 2.426958 The t-value is higher→moderate correlation.</p>
+<p>p-value: 0.02386844 &lt;0.05→correlation is statistically
+significant.</p>
+<p>Summary: • Day 3 and Day 4 show significant positive correlations in
+both nutrient and water treatments, indicating a strong linear
+relationship between the lengths on these two days. • Day 3 and Day 8
+show no significant correlation in the nutrient treatment (p-value &gt;
+0.05), but a moderate positive correlation in the water treatment
+(p-value &lt; 0.05). •<br />
+Thus, length in Day 3 and Day 4 have a significant correlation in both
+treatments, while the correlation between Day 3 and Day 8 is weaker or
+not significant.</p>
 <pre class="r"><code># Nutrient Day 3 vs Day 4
 ggplot(nutrient, aes(x = day3, y = day4)) +
   geom_point(color = &quot;blue&quot;) +
@@ -613,7 +647,7 @@ ggplot(water, aes(x = day3, y = day8)) +
 ##     class(RVAL) &lt;- &quot;htest&quot;
 ##     RVAL
 ## }
-## &lt;bytecode: 0x0000024441db1270&gt;
+## &lt;bytecode: 0x000001d842b0e668&gt;
 ## &lt;environment: namespace:stats&gt;</code></pre>
 <pre class="r"><code>#查看cor.test背後的程式碼#函數是如何處理輸入數據的（例如是否有 NA 值、是否是數字型資料）。
 #背後的公式和計算方法，像是相關係數公式、t 值的計算。
