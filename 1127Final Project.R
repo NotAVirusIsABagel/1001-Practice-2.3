@@ -10,13 +10,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+install.packages("lubridate")
+install.packages("forcats")
+
 library(dplyr)
 library(terra)
 library(rgbif)
 library(sp)
 library(leaflet)
 library(ggplot2)
+library(lubridate)
 library(readxl)
+library(tidyr)
+library(forcats)
 
 
 raw.data <- read_excel("C:/Users/User/Desktop/碩一上/RRRRR/0924-in-class-practice/excel spawning.xlsx")
@@ -146,7 +152,7 @@ library(vegan)
 #result <- adonis2(dist_matrix ~ Country + Genus, data = spawning.tw.jp)
 #print(result)
 
----#i have no idea wat im doin
+---#major spawning test 1
   # 確保必要欄位為數字型態
   
 spawning.tw.jp$Latitude <- as.numeric(spawning.tw.jp$Latitude)
@@ -197,3 +203,40 @@ ggplot(spawning.tw.jp, aes(x = DoSRtNFM, y = Site)) +
     color = "Country"
   ) +
   theme_minimal()
+
+
+----#major spawning test 2
+  # 分離日期
+  split.data <- raw.data %>%
+  separate(Date, into = c("year", "month", "day"), sep = "-") %>%
+  mutate(
+    # 將日期轉換為日期格式（不含年份）
+    DateFormatted = as.Date(paste(2024, month, day, sep = "-"), "%Y-%m-%d"),
+    Country = as.factor(Country) # 確保國家是因子
+  ) %>%
+  filter(year == 2016) %>% 
+  mutate(
+    SiteOrdered = fct_reorder(Site, Latitude, .desc = FALSE) # 根據緯度重新排列地點
+  )
+
+ggplot(split.data, aes(x = DateFormatted, y = SiteOrdered, color = Country)) +
+  geom_point(alpha = 0.6, size = 2) +
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    x = "Date (2016)",
+    y = "Site (ordered by latitude low to high)",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+#赤道在Raffles Lighthouse和Moorea中間
+#醬看起來major spawning時間好像和緯度沒什麼差別?
+
+
+
+
+
+
+
