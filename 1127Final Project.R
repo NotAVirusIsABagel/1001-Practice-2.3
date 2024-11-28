@@ -146,6 +146,54 @@ library(vegan)
 #result <- adonis2(dist_matrix ~ Country + Genus, data = spawning.tw.jp)
 #print(result)
 
+---#i have no idea wat im doin
+  # 確保必要欄位為數字型態
+  
+spawning.tw.jp$Latitude <- as.numeric(spawning.tw.jp$Latitude)
+spawning.tw.jp$DoSRtNFM <- as.numeric(spawning.tw.jp$DoSRtNFM)
+
+# 依緯度對地點名稱進行排序
+spawning.tw.jp <- spawning.tw.jp %>%
+  arrange(Latitude) %>%
+  mutate(Site = factor(Site, levels = unique(Site)))  # 把地點設為因子型態，依緯度排列
 
 
+library(ggplot2)
 
+ggplot(spawning.tw.jp, aes(x = DoSRtNFM, y = Site)) +
+  geom_point(aes(color = Country), size = 3, alpha = 0.7) +  # 根據國家上色
+  labs(
+    x = "Spawning Time (Day of Year)",
+    y = "Site (Ordered by Latitude)",
+    title = "Major Spawning Time by Site",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 10))  # 調整 y 軸標籤大小
+
+
+spawning.tw.jp <- spawning.tw.jp %>%
+  arrange(Country, Latitude) %>%
+  mutate(Site = factor(Site, levels = unique(Site)))
+
+spawning.tw.jp <- spawning.tw.jp %>%
+  group_by(Site) %>%
+  summarise(mean_time = mean(DoSRtNFM, na.rm = TRUE)) %>%
+  arrange(mean_time) %>%
+  mutate(Site = factor(Site, levels = unique(Site)))
+
+spawning.tw.jp$Site <- factor(
+  spawning.tw.jp$Site,
+  levels = c("Site1", "Site3", "Site2", "Site4")  # 按需求調整順序
+)
+
+ggplot(spawning.tw.jp, aes(x = DoSRtNFM, y = Site)) +
+  geom_point(aes(color = Country), size = 3, alpha = 0.7) +
+  geom_vline(xintercept = c(120, 150), linetype = "dashed", color = "red") +  # 標示範圍
+  labs(
+    x = "Spawning Time (Day of Year)",
+    y = "Site (Ordered by Latitude)",
+    title = "Major Spawning Time by Site",
+    color = "Country"
+  ) +
+  theme_minimal()
