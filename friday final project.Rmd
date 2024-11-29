@@ -1,0 +1,207 @@
+---
+title: "1129 final project test"
+author: "Annie"
+date: "2024-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(leaflet)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(tidyr)
+library(emmeans)
+library(readxl)
+library(RColorBrewer)
+```
+
+```{r}
+raw.data <- read_excel("C:/Users/User/Desktop/碩一上/RRRRR/0924-in-class-practice/excel spawning.xlsx")
+```
+
+```{r}
+# select the countries needed (Taiwan & Japan)
+spawning.country <- raw.data %>% 
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
+                      'Goniastrea', 'Platygyra', 'Porites'))
+# delete the unneeded columns
+spawning.country[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
+                      'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+spawning.country$color <- ifelse(spawning.country$Country == "Japan", "#F8766D", "#00BFC4")
+# Mapping
+leaflet() %>%
+  addTiles() %>%
+  setView(lng = 121.0, lat = 20, zoom = 3.5) %>% # Center the map on Taiwan
+  addCircleMarkers(
+    lng = spawning.country$Longitude,
+    lat = spawning.country$Latitude,
+    popup = spawning.country$Site,
+    radius = 5,
+    fillColor = spawning.country$color,
+    fillOpacity = 1,
+    stroke = F)
+    
+```
+
+
+```{r}
+spawning.tw.jp <- raw.data %>% 
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
+                      'Goniastrea', 'Platygyra', 'Porites'))
+spawning.tw.jp[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
+                    'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+genus.tj.day <- ggplot(data = spawning.tw.jp,
+                       aes(x = Genus, y = DoSRtNFM, color = Country))+
+  geom_boxplot()
+genus.tj.day
+#check residual----
+model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.tw.jp)
+summary(model)
+par(mfrow=c(1,2))
+plot(model, which=c(1,2))
+```
+
+```{r}
+#emmeans----
+#Ho: In different Genus, Japan=Taiwan
+#H1: In different Genus, Japan is not equal to Taiwan
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Genus='Coelastrea'), Country=c('Japan', 'Taiwan'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Dipsastraea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Favites'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Galaxea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Goniastrea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Lobophyllia'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Platygyra'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Porites'))
+```
+
+```{r}
+split.data <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/") %>%
+  mutate(
+    # 將日期轉換為日期格式（不含年份）
+    DateFormatted = as.Date(paste(2024, month, day, sep = "-"), "%Y-%m-%d"),
+    Country = as.factor(Country) # 確保國家是因子
+  ) %>%
+  filter(year == 2016) %>% 
+  mutate(
+    SiteOrdered = fct_reorder(Site, Latitude, .desc = FALSE) # 根據緯度重新排列地點
+  )
+#dot according to size
+aggregated.data <- split.data %>%
+  group_by(DateFormatted, SiteOrdered, Country) %>%
+  summarise(Count = n(), .groups = "drop") 
+ggplot(aggregated.data, aes(x = DateFormatted, y = SiteOrdered, size = Count, color = Country)) +
+  geom_point(alpha = 0.4) + # 點的透明度和大小
+  scale_size_continuous(name = "Count",
+                        range = c(1, 8)) + # 調整點大小
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    x = "Date (2016)",
+    y = "Site (ordered by latitude)",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+#赤道在Raffles Lighthouse和Moorea中間
+#醬看起來major spawning時間好像和緯度沒什麼差別?
+#好餓 
+```
+
+
+```{r}
+split.data2016 <- raw.data %>%
+  separate(Date, into = c("date", "month", "year"), sep = "/")
+summary(as.factor(split.data2016$year))
+max(summary(as.factor(split.data2016$year))) #use 2016 data
+combine.date.2016 <- split.data2016 %>% 
+  filter(year %in% "2016")
+```
+```{r}
+library(leaflet)
+leaflet(data = combine.date.2016) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~Longitude,         # Use formula notation for coordinates
+    lat = ~Latitude,
+    popup = ~Site,            # Popup from the same dataset
+    radius = 5,
+    weight = 0.1,
+    color = "black",
+    fillColor = ~colorFactor(palette = "Set3", domain = combine.date.2016$Country)(Country)  # Correct domain for color mapping
+  )
+```
+
+```{r}
+library(forcats)
+library(dplyr)
+library(tidyr)
+library(RColorBrewer)
+
+split.data <- raw.data %>%
+  separate(Date, into = c("year", "month", "day"), sep = "-") %>% #先把年月日拆開才能篩選2016
+  filter(year == 2016) %>% 
+  mutate(
+    date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
+    site.y = fct_reorder(Site, Latitude, .desc = FALSE) # 根據緯度重新排列地點
+  )%>%
+  group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
+  summarise(Count = n())  # n()功能可以算算同一坨有多少個。接著命名為 Count
+
+i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
+#set1_colors：指定點點顏色為Set3！
+#unique()：獲取該欄位中所有不重複的值，也就是所有不同的國家。
+#length()：計算不重複值的數量，就是總共有幾個國家
+#brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
+
+
+ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
+  geom_point(alpha = 0.6) +  
+  scale_size_continuous(name = "Count", range = c(1, 8)) +  # 調整點大小
+  scale_color_manual(values = i.want.set3) +  
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    title = "Sampling Distribution by Date and Site in 2016",
+    x = "Date (2016)",
+    y = "Site (ordered by latitude)",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    
+  )
+
+
+```
+
+
+
+
+
+
+## Introduction
+
+- map of coral spawning sites 
+
+##Discussion
+```
+
